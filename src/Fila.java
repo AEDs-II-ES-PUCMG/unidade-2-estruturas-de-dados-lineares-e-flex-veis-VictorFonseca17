@@ -53,6 +53,38 @@ public class Fila<E> {
 
 	}
 	
+	/**
+	 * Percorre a fila (sem removê-la) e conta quantas células armazenam um item
+	 * {@linkplain Object#equals(Object) igual} ao parâmetro.
+	 */
+	public int contarOcorrencias(E elemento) {
+
+		int contagem = 0;
+		for (Celula<E> aux = frente.getProximo(); aux != null; aux = aux.getProximo()) {
+			E item = aux.getItem();
+			if (elemento == null ? item == null : elemento.equals(item)) {
+				contagem++;
+			}
+		}
+		return contagem;
+	}
+
+	/**
+	 * Remove da frente desta fila até {@code numItens} elementos (ou todos, se houver menos)
+	 * e os devolve em uma nova fila, na mesma ordem.
+	 */
+	public Fila<E> extrairLote(int numItens) {
+
+		Fila<E> lote = new Fila<>();
+		if (numItens <= 0) {
+			return lote;
+		}
+		for (int i = 0; i < numItens && !vazia(); i++) {
+			lote.enfileirar(desenfileirar());
+		}
+		return lote;
+	}
+
 	public void imprimir() {
 		
 		Celula<E> aux;

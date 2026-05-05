@@ -6,9 +6,7 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -16,15 +14,19 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class Aplicacao {
 
-	/** Edite com o seu número de matrícula (apenas teste da pilha, tarefa 1). */
-	private static final String MATRICULA = "24108173";
+	/** Edite com o seu primeiro e segundo nome (teste da fila, tarefa 1). */
+	private static final String PRIMEIRO_NOME = "Victor";
+	private static final String SEGUNDO_NOME = "Fonseca";
 
 	/** Nome do arquivo de produtos (raiz do projeto, relativo ao diretório de execução). */
 	private static String nomeArquivoDados;
 
 	/** Nome do arquivo de pedidos persistidos. */
 	private static final String NOME_ARQUIVO_PEDIDOS = "pedidos.txt";
-	private static final String CABECALHO_ARQUIVO_PEDIDOS = "PEDIDOS_V1";
+	/** Formato antigo (pilha): primeiro pedido gravado = mais recente. */
+	private static final String CABECALHO_ARQUIVO_PEDIDOS_V1 = "PEDIDOS_V1";
+	/** Formato atual (fila): primeiro pedido gravado = mais antigo (frente da fila). */
+	private static final String CABECALHO_ARQUIVO_PEDIDOS_V2 = "PEDIDOS_V2";
 
 	/** Scanner para leitura de dados do teclado */
 	private static Scanner teclado;
@@ -35,8 +37,8 @@ public class Aplicacao {
 	/** Quantidade de produtos cadastrados atualmente no vetor */
 	private static int quantosProdutos = 0;
 
-	/** Pilha de pedidos finalizados (topo = mais recente). */
-	private static Pilha<Pedido> pilhaPedidos = new Pilha<>();
+	/** Fila de pedidos finalizados aguardando processamento (fim = mais recente). */
+	private static Fila<Pedido> filaPedidos = new Fila<>();
 
 	/** Pilha de produtos dos pedidos finalizados (topo = mais recentemente pedido). */
 	private static Pilha<Produto> pilhaProdutosRecentes = new Pilha<>();
@@ -251,7 +253,7 @@ public class Aplicacao {
 	}
 
 	/**
-	 * Finaliza um pedido: empilha o pedido e os produtos vendidos nas estruturas correspondentes.
+	 * Finaliza um pedido: enfileira o pedido e registra os produtos vendidos na pilha de recentes.
 	 * 
 	 * @param pedido O pedido que deve ser finalizado.
 	 * @return null após finalizar (pedido em memória não deve ser reutilizado).
@@ -267,7 +269,7 @@ public class Aplicacao {
 			return pedido;
 		}
 
-		pilhaPedidos.empilhar(pedido);
+		filaPedidos.enfileirar(pedido);
 		ItemDePedido[] itens = pedido.getItensDoPedido();
 		for (int i = 0; i < pedido.getQuantidadeDeItens(); i++) {
 			pilhaProdutosRecentes.empilhar(itens[i].getProduto());
@@ -306,57 +308,57 @@ public class Aplicacao {
 	}
 
 	/**
-	 * Tarefa 1: empilha os dígitos distintos da matrícula (ordem da primeira ocorrência),
-	 * exibe a pilha e demonstra empilhar/desempilhar.
+	 * Tarefa 1: {@link Fila} de caracteres com primeiro e segundo nome, contagem de ocorrências,
+	 * e demonstração de enfileirar / desenfileirar.
 	 */
-	private static void executarTestesPreliminaresPilha() {
+	private static void executarTestesPreliminaresFila() {
 
-		System.out.println("========== Testes preliminares (pilha / matrícula) ==========");
-		Set<Character> digitosJaVistos = new HashSet<>();
-		Pilha<Integer> pilhaMatricula = new Pilha<>();
+		System.out.println("========== Testes preliminares (fila / nome) ==========");
+		Fila<Character> fila = new Fila<>();
 
-		for (int i = 0; i < MATRICULA.length(); i++) {
-			char c = MATRICULA.charAt(i);
-			if (Character.isDigit(c) && !digitosJaVistos.contains(c)) {
-				digitosJaVistos.add(c);
-				pilhaMatricula.empilhar(c - '0');
-			}
+		for (int i = 0; i < PRIMEIRO_NOME.length(); i++) {
+			fila.enfileirar(PRIMEIRO_NOME.charAt(i));
+		}
+		for (int i = 0; i < SEGUNDO_NOME.length(); i++) {
+			fila.enfileirar(SEGUNDO_NOME.charAt(i));
 		}
 
-		System.out.println("Matrícula utilizada: " + MATRICULA);
-		System.out.print("Conteúdo atual da pilha (do topo para o fundo): ");
-		Pilha<Integer> aux = new Pilha<>();
-		while (!pilhaMatricula.vazia()) {
-			Integer v = pilhaMatricula.desempilhar();
-			System.out.print(v + " ");
-			aux.empilhar(v);
-		}
-		System.out.println();
-		while (!aux.vazia()) {
-			pilhaMatricula.empilhar(aux.desempilhar());
+		System.out.println("Primeiro nome: " + PRIMEIRO_NOME + " | Segundo nome: " + SEGUNDO_NOME);
+		System.out.println("Ocorrências de 'o': " + fila.contarOcorrencias('o'));
+		System.out.println("Ocorrências de 'i': " + fila.contarOcorrencias('i'));
+		System.out.println("Ocorrências de 'z': " + fila.contarOcorrencias('z'));
+
+		System.out.println("Desenfileirando 3 caracteres (FIFO):");
+		for (int i = 0; i < 3; i++) {
+			System.out.println("  -> " + fila.desenfileirar());
 		}
 
-		System.out.println("Desempilhando o topo: " + pilhaMatricula.desempilhar());
-		pilhaMatricula.empilhar(9);
-		System.out.println("Empilhando 9 e consultando o topo: " + pilhaMatricula.consultarTopo());
-		System.out.println("============================================================\n");
+		System.out.println("Após 3 desenfileiramentos, ocorrências de 'o': " + fila.contarOcorrencias('o'));
+
+		fila.enfileirar('!');
+		fila.enfileirar('?');
+		System.out.println("Após enfileirar '!' e '?', ocorrências de '!': " + fila.contarOcorrencias('!'));
+
+		System.out.println("Conteúdo restante da fila (impressão frente → fim):");
+		fila.imprimir();
+		System.out.println("======================================================\n");
 	}
 
 	private static void gravarPedidos(String nomeArquivo) {
 
-		ArrayList<Pedido> ordemTopoParaBaixo = new ArrayList<>();
-		while (!pilhaPedidos.vazia()) {
-			ordemTopoParaBaixo.add(pilhaPedidos.desempilhar());
+		ArrayList<Pedido> ordemAntigoParaRecente = new ArrayList<>();
+		while (!filaPedidos.vazia()) {
+			ordemAntigoParaRecente.add(filaPedidos.desenfileirar());
 		}
-		for (int i = ordemTopoParaBaixo.size() - 1; i >= 0; i--) {
-			pilhaPedidos.empilhar(ordemTopoParaBaixo.get(i));
+		for (Pedido p : ordemAntigoParaRecente) {
+			filaPedidos.enfileirar(p);
 		}
 
 		DateTimeFormatter isoData = DateTimeFormatter.ISO_LOCAL_DATE;
 		try (PrintWriter out = new PrintWriter(new FileWriter(nomeArquivo, Charset.forName("UTF-8")))) {
-			out.println(CABECALHO_ARQUIVO_PEDIDOS);
-			out.println(ordemTopoParaBaixo.size());
-			for (Pedido pedido : ordemTopoParaBaixo) {
+			out.println(CABECALHO_ARQUIVO_PEDIDOS_V2);
+			out.println(ordemAntigoParaRecente.size());
+			for (Pedido pedido : ordemAntigoParaRecente) {
 				out.println(pedido.getIdPedido());
 				out.println(isoData.format(pedido.getDataPedido()));
 				out.println(pedido.getFormaDePagamento());
@@ -373,6 +375,36 @@ public class Aplicacao {
 		}
 	}
 
+	/** Reconstrói a pilha de produtos recentes a partir dos itens de um pedido. */
+	private static void empilharProdutosDoPedido(Pedido pedido) {
+		ItemDePedido[] itens = pedido.getItensDoPedido();
+		for (int i = 0; i < pedido.getQuantidadeDeItens(); i++) {
+			pilhaProdutosRecentes.empilhar(itens[i].getProduto());
+		}
+	}
+
+	private static Pedido lerProximoPedidoDoArquivo(Scanner arq, DateTimeFormatter isoData) throws IOException {
+
+		int idPedido = Integer.parseInt(arq.nextLine().trim());
+		LocalDate data = LocalDate.parse(arq.nextLine().trim(), isoData);
+		int forma = Integer.parseInt(arq.nextLine().trim());
+		int qtdItens = Integer.parseInt(arq.nextLine().trim());
+		ItemDePedido[] itens = new ItemDePedido[qtdItens];
+		for (int i = 0; i < qtdItens; i++) {
+			String linhaItem = arq.nextLine();
+			String[] partes = linhaItem.split(";");
+			int codProd = Integer.parseInt(partes[0].trim());
+			int qtd = Integer.parseInt(partes[1].trim());
+			double preco = Double.parseDouble(partes[2].trim().replace(",", "."));
+			Produto prod = localizarProdutoPorCodigo(codProd);
+			if (prod == null) {
+				throw new IOException("Produto código " + codProd + " não encontrado no cadastro.");
+			}
+			itens[i] = new ItemDePedido(prod, qtd, preco);
+		}
+		return Pedido.restaurar(data, forma, idPedido, itens, qtdItens);
+	}
+
 	private static void carregarPedidos(String nomeArquivo) {
 
 		File f = new File(nomeArquivo);
@@ -381,40 +413,42 @@ public class Aplicacao {
 		}
 
 		try (Scanner arq = new Scanner(f, Charset.forName("UTF-8"))) {
-			if (!arq.hasNextLine() || !CABECALHO_ARQUIVO_PEDIDOS.equals(arq.nextLine().trim())) {
+			if (!arq.hasNextLine()) {
+				return;
+			}
+			String cabecalho = arq.nextLine().trim();
+			boolean formatoV2 = CABECALHO_ARQUIVO_PEDIDOS_V2.equals(cabecalho);
+			boolean formatoV1 = CABECALHO_ARQUIVO_PEDIDOS_V1.equals(cabecalho);
+			if (!formatoV2 && !formatoV1) {
 				return;
 			}
 			int n = Integer.parseInt(arq.nextLine().trim());
 			DateTimeFormatter isoData = DateTimeFormatter.ISO_LOCAL_DATE;
+			ArrayList<Pedido> lista = new ArrayList<>(n);
 
 			for (int p = 0; p < n; p++) {
-				int idPedido = Integer.parseInt(arq.nextLine().trim());
-				LocalDate data = LocalDate.parse(arq.nextLine().trim(), isoData);
-				int forma = Integer.parseInt(arq.nextLine().trim());
-				int qtdItens = Integer.parseInt(arq.nextLine().trim());
-				ItemDePedido[] itens = new ItemDePedido[qtdItens];
-				for (int i = 0; i < qtdItens; i++) {
-					String linhaItem = arq.nextLine();
-					String[] partes = linhaItem.split(";");
-					int codProd = Integer.parseInt(partes[0].trim());
-					int qtd = Integer.parseInt(partes[1].trim());
-					double preco = Double.parseDouble(partes[2].trim().replace(",", "."));
-					Produto prod = localizarProdutoPorCodigo(codProd);
-					if (prod == null) {
-						throw new IOException("Produto código " + codProd + " não encontrado no cadastro.");
-					}
-					itens[i] = new ItemDePedido(prod, qtd, preco);
+				lista.add(lerProximoPedidoDoArquivo(arq, isoData));
+			}
+
+			if (formatoV2) {
+				for (Pedido pedido : lista) {
+					filaPedidos.enfileirar(pedido);
 				}
-				Pedido pedido = Pedido.restaurar(data, forma, idPedido, itens, qtdItens);
-				pilhaPedidos.empilhar(pedido);
-				for (int i = 0; i < qtdItens; i++) {
-					pilhaProdutosRecentes.empilhar(itens[i].getProduto());
+				for (int i = lista.size() - 1; i >= 0; i--) {
+					empilharProdutosDoPedido(lista.get(i));
+				}
+			} else {
+				for (int i = lista.size() - 1; i >= 0; i--) {
+					filaPedidos.enfileirar(lista.get(i));
+				}
+				for (int i = 0; i < lista.size(); i++) {
+					empilharProdutosDoPedido(lista.get(i));
 				}
 			}
 		} catch (Exception e) {
 			System.err.println("Aviso: não foi possível carregar pedidos salvos (" + e.getMessage() + ").");
-			while (!pilhaPedidos.vazia()) {
-				pilhaPedidos.desempilhar();
+			while (!filaPedidos.vazia()) {
+				filaPedidos.desenfileirar();
 			}
 			while (!pilhaProdutosRecentes.vazia()) {
 				pilhaProdutosRecentes.desempilhar();
@@ -433,7 +467,7 @@ public class Aplicacao {
 		}
 
 		carregarPedidos(NOME_ARQUIVO_PEDIDOS);
-		executarTestesPreliminaresPilha();
+		executarTestesPreliminaresFila();
 
 		Pedido pedido = null;
 

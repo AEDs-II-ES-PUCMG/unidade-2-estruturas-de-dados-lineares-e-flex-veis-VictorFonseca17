@@ -3,3 +3,9 @@
 
 # Saída de compilação local
 out/
+
+# Configuração local do editor
+.vscode/
+
+# Scripts de build locais
+*.sh
