@@ -1,0 +1,5 @@
+# Bytecode Java
+*.class
+
+# Saída de compilação local
+out/

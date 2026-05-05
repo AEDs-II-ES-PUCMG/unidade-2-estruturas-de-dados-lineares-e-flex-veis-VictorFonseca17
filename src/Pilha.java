@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 public class Pilha<E> {
@@ -53,8 +54,36 @@ public class Pilha<E> {
 	 * @throws IllegalArgumentException se a pilha não contém numItens elementos.
 	 */
 	public Pilha<E> subPilha(int numItens) {
-		
-		// TODO
-		return null;
+
+		if (numItens < 0) {
+			throw new IllegalArgumentException("numItens não pode ser negativo.");
+		}
+		if (numItens == 0) {
+			return new Pilha<E>();
+		}
+
+		ArrayList<E> ordemDoTopoParaBaixo = new ArrayList<>();
+		Pilha<E> aux = new Pilha<E>();
+
+		while (!vazia()) {
+			E e = desempilhar();
+			ordemDoTopoParaBaixo.add(e);
+			aux.empilhar(e);
+		}
+		while (!aux.vazia()) {
+			empilhar(aux.desempilhar());
+		}
+
+		int n = ordemDoTopoParaBaixo.size();
+		if (numItens > n) {
+			throw new IllegalArgumentException(
+					String.format("A pilha contém apenas %d elemento(s), mas foram solicitados %d.", n, numItens));
+		}
+
+		Pilha<E> resultado = new Pilha<E>();
+		for (int i = numItens - 1; i >= 0; i--) {
+			resultado.empilhar(ordemDoTopoParaBaixo.get(i));
+		}
+		return resultado;
 	}
 }

@@ -39,9 +39,51 @@ public class Pedido implements Comparable<Pedido> {
 		this.dataPedido = dataPedido;
 		this.formaDePagamento = formaDePagamento;
 	}
+
+	/**
+	 * Restaura um pedido a partir de dados gravados em arquivo (persistência).
+	 */
+	static Pedido restaurar(LocalDate dataPedido, int formaDePagamento, int idPedidoGravado,
+			ItemDePedido[] itens, int quantidadeDeItens) {
+
+		Pedido pedido = new Pedido(dataPedido, formaDePagamento, idPedidoGravado);
+		for (int i = 0; i < quantidadeDeItens; i++) {
+			pedido.itensDePedido[i] = itens[i];
+		}
+		pedido.quantItensDePedido = quantidadeDeItens;
+		return pedido;
+	}
+
+	private Pedido(LocalDate dataPedido, int formaDePagamento, int idPedidoFixo) {
+
+		idPedido = idPedidoFixo;
+		if (idPedidoFixo >= ultimoID) {
+			ultimoID = idPedidoFixo + 1;
+		}
+		itensDePedido = new ItemDePedido[MAX_ITENS_DE_PEDIDO];
+		quantItensDePedido = 0;
+		this.dataPedido = dataPedido;
+		this.formaDePagamento = formaDePagamento;
+	}
 	
 	public ItemDePedido[] getItensDoPedido() {
 		return itensDePedido;
+	}
+
+	public int getQuantidadeDeItens() {
+		return quantItensDePedido;
+	}
+
+	public int getIdPedido() {
+		return idPedido;
+	}
+
+	public LocalDate getDataPedido() {
+		return dataPedido;
+	}
+
+	public int getFormaDePagamento() {
+		return formaDePagamento;
 	}
 	
 	public ItemDePedido existeNoPedido(Produto produto) {
